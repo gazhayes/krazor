@@ -26,9 +26,12 @@
 # STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 # THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# We aren't even going to check the system for an installed LMDB driver, as it is too
-# critical a consensus component to rely on dynamically linked libraries
-message(STATUS "Using ${ARCH_WIDTH}-bit LMDB from source tree")
-add_subdirectory(liblmdb${ARCH_WIDTH})
-set(LMDB_INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/liblmdb${ARCH_WIDTH}" CACHE STRING "LMDB Include path")
-set(LMDB_LIBRARY "lmdb" CACHE STRING "LMDB Library name")
+if(APPLE)
+    add_library(blocks STATIC blockexports.c)
+    set_target_properties(blocks PROPERTIES LINKER_LANGUAGE C)
+else()
+	add_custom_command(OUTPUT blocks.o COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ld -r -b binary -o ${CMAKE_CURRENT_BINARY_DIR}/blocks.o blocks.dat)
+    add_library(blocks STATIC blocks.o blockexports.c)
+    set_target_properties(blocks PROPERTIES LINKER_LANGUAGE C)
+endif()
+
